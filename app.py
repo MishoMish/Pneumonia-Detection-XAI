@@ -482,10 +482,11 @@ else:
                     is_pneumonia = np.argmax(prediction[0]) == 1
                     confidence = float(np.max(prediction[0]))
 
-                # 3. Generate Improved Grad-CAM
-                # Note: We now use the 'make_gradcam_heatmap' and 'overlay_gradcam' functions
-                heatmap = make_gradcam_heatmap(preprocessed_batch, model, LAST_CONV_LAYER)
-                overlay = overlay_gradcam(original_array, heatmap, alpha=0.4)
+                # 3. Generate Improved Grad-CAM (only if pneumonia detected)
+                overlay = None
+                if is_pneumonia:
+                    heatmap = make_gradcam_heatmap(preprocessed_batch, model, LAST_CONV_LAYER)
+                    overlay = overlay_gradcam(original_array, heatmap, alpha=0.4)
 
                 # 4. Display Results
                 st.markdown("<br><br>", unsafe_allow_html=True)
@@ -558,39 +559,40 @@ else:
                     </div>
                     """, unsafe_allow_html=True)
                 
-                # Display images side by side
-                st.markdown("<br><br>", unsafe_allow_html=True)
-                st.markdown("<h3 style='text-align: center; color: #1a1a1a;'>Visual Analysis</h3>", unsafe_allow_html=True)
-                
-                col1, col2 = st.columns(2)
-                
-                with col1:
+                # Display images side by side (only show Grad-CAM for pneumonia cases)
+                if is_pneumonia:
+                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    st.markdown("<h3 style='text-align: center; color: #1a1a1a;'>Visual Analysis</h3>", unsafe_allow_html=True)
+                    
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        st.markdown("""
+                        <div class="image-container">
+                            <div class="image-label">Original X-Ray</div>
+                        """, unsafe_allow_html=True)
+                        st.image(image, use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
+                    with col2:
+                        st.markdown("""
+                        <div class="image-container">
+                            <div class="image-label">Enhanced Grad-CAM</div>
+                        """, unsafe_allow_html=True)
+                        st.image(overlay, use_container_width=True)
+                        st.markdown("</div>", unsafe_allow_html=True)
+                    
                     st.markdown("""
-                    <div class="image-container">
-                        <div class="image-label">Original X-Ray</div>
+                    <div class="info-box">
+                        <h4 style="margin-top: 0; color: #1e40af;">Understanding the Heat Map</h4>
+                        <p style="margin-bottom: 0;">
+                            The Grad-CAM visualization shows which regions of the X-ray the AI focused on. 
+                            We have <strong>filtered out low-confidence background noise</strong> to make the diagnosis clearer.
+                            <span style="color: #dc2626; font-weight: bold;">Red areas</span> indicate regions of high attention 
+                            contributing to the prediction.
+                        </p>
+                    </div>
                     """, unsafe_allow_html=True)
-                    st.image(image, use_container_width=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
-                
-                with col2:
-                    st.markdown("""
-                    <div class="image-container">
-                        <div class="image-label">Enhanced Grad-CAM</div>
-                    """, unsafe_allow_html=True)
-                    st.image(overlay, use_container_width=True)
-                    st.markdown("</div>", unsafe_allow_html=True)
-                
-                st.markdown("""
-                <div class="info-box">
-                    <h4 style="margin-top: 0; color: #1e40af;">Understanding the Heat Map</h4>
-                    <p style="margin-bottom: 0;">
-                        The Grad-CAM visualization shows which regions of the X-ray the AI focused on. 
-                        We have <strong>filtered out low-confidence background noise</strong> to make the diagnosis clearer.
-                        <span style="color: #dc2626; font-weight: bold;">Red areas</span> indicate regions of high attention 
-                        contributing to the prediction.
-                    </p>
-                </div>
-                """, unsafe_allow_html=True)
     
     else:
         # Placeholder when no image is uploaded
